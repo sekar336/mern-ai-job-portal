@@ -1,0 +1,28 @@
+{
+  "name": "mern-ai-job-portal",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "jwt-decode": "^4.0.0",
+    "mammoth": "^1.12.2",
+    "mongoose": "^8.18.0",
+    "multer": "^2.2.0",
+    "openai": "^7.10.0",
+    "pdf-parse": "^2.4.5",
+    "tailwindcss": "^4.3.3"
+  }
+}
