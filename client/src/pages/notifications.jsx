@@ -28,10 +28,7 @@ function Notifications() {
         setNotifications(data.notifications || []);
       }
     } catch (error) {
-      console.error(
-        "Fetch notifications error:",
-        error
-      );
+      console.error("Fetch notifications error:", error);
     } finally {
       setLoading(false);
     }
@@ -68,10 +65,7 @@ function Notifications() {
         );
       }
     } catch (error) {
-      console.error(
-        "Mark notification error:",
-        error
-      );
+      console.error("Mark notification error:", error);
     }
   };
 
@@ -100,10 +94,7 @@ function Notifications() {
         );
       }
     } catch (error) {
-      console.error(
-        "Mark all notifications error:",
-        error
-      );
+      console.error("Mark all notifications error:", error);
     } finally {
       setActionLoading(false);
     }
@@ -126,24 +117,19 @@ function Notifications() {
       if (response.ok && data.success) {
         setNotifications((current) =>
           current.filter(
-            (notification) =>
-              notification._id !== id
+            (notification) => notification._id !== id
           )
         );
       }
     } catch (error) {
-      console.error(
-        "Delete notification error:",
-        error
-      );
+      console.error("Delete notification error:", error);
     }
   };
 
   const filteredNotifications =
     filter === "unread"
       ? notifications.filter(
-          (notification) =>
-            !notification.isRead
+          (notification) => !notification.isRead
         )
       : notifications;
 
@@ -233,8 +219,7 @@ function Notifications() {
 
   const getTimeAgo = (date) => {
     const seconds = Math.floor(
-      (Date.now() - new Date(date).getTime()) /
-        1000
+      (Date.now() - new Date(date).getTime()) / 1000
     );
 
     if (seconds < 60) {
@@ -259,22 +244,17 @@ function Notifications() {
       return `${days}d ago`;
     }
 
-    return new Date(date).toLocaleDateString(
-      "en-IN",
-      {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }
-    );
+    return new Date(date).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   return (
     <div className="min-h-screen bg-slate-50">
 
-      {/* =====================================================
-          HERO
-      ====================================================== */}
+      {/* HERO */}
       <section className="relative overflow-hidden bg-slate-950 text-white">
 
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.20),transparent_35%),radial-gradient(circle_at_80%_30%,rgba(99,102,241,0.18),transparent_35%)]" />
@@ -284,6 +264,7 @@ function Notifications() {
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
 
             <div>
+
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-blue-300 text-xs font-bold uppercase tracking-[0.16em] mb-5">
                 CareerAI
                 <span className="w-1 h-1 rounded-full bg-blue-400" />
@@ -302,6 +283,7 @@ function Notifications() {
                 activity and important hiring events
                 from one intelligent workspace.
               </p>
+
             </div>
 
             <div className="flex items-center gap-3">
@@ -327,13 +309,14 @@ function Notifications() {
               </div>
 
             </div>
+
           </div>
+
         </div>
+
       </section>
 
-      {/* =====================================================
-          MAIN
-      ====================================================== */}
+      {/* MAIN */}
       <main className="max-w-[1200px] mx-auto px-5 sm:px-8 py-8">
 
         {/* TOOLBAR */}
@@ -361,11 +344,13 @@ function Notifications() {
               }`}
             >
               Unread
+
               {unreadCount > 0 && (
                 <span className="ml-2 text-[10px]">
                   {unreadCount}
                 </span>
               )}
+
             </button>
 
           </div>
@@ -392,6 +377,7 @@ function Notifications() {
             )}
 
           </div>
+
         </div>
 
         {/* LOADING */}
@@ -449,144 +435,137 @@ function Notifications() {
             </Link>
 
           </div>
+
         ) : (
 
           /* NOTIFICATION LIST */
           <div className="space-y-3">
 
-            {filteredNotifications.map(
-              (notification) => (
-                <div
-                  key={notification._id}
-                  className={`group relative bg-white border rounded-2xl p-5 transition-all ${
-                    notification.isRead
-                      ? "border-slate-200 hover:border-slate-300"
-                      : "border-blue-200 bg-blue-50/30 shadow-sm shadow-blue-100"
-                  }`}
-                >
+            {filteredNotifications.map((notification) => (
 
-                  {/* UNREAD INDICATOR */}
-                  {!notification.isRead && (
-                    <span className="absolute left-0 top-5 bottom-5 w-1 rounded-r-full bg-blue-600" />
-                  )}
+              <div
+                key={notification._id}
+                className={`group relative bg-white border rounded-2xl p-5 transition-all ${
+                  notification.isRead
+                    ? "border-slate-200 hover:border-slate-300"
+                    : "border-blue-200 bg-blue-50/30 shadow-sm shadow-blue-100"
+                }`}
+              >
 
-                  <div className="flex gap-4">
+                {/* UNREAD INDICATOR */}
+                {!notification.isRead && (
+                  <span className="absolute left-0 top-5 bottom-5 w-1 rounded-r-full bg-blue-600" />
+                )}
 
-                    {getNotificationIcon(
-                      notification.type
-                    )}
+                <div className="flex gap-4">
 
-                    <div className="flex-1 min-w-0">
+                  {getNotificationIcon(notification.type)}
 
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                  <div className="flex-1 min-w-0">
 
-                        <div>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
 
-                          <div className="flex items-center gap-2">
+                      <div>
 
-                            <h3 className="font-black text-slate-900">
-                              {notification.title}
-                            </h3>
+                        <div className="flex items-center gap-2">
 
-                            {!notification.isRead && (
-                              <span className="w-2 h-2 rounded-full bg-blue-600" />
-                            )}
+                          <h3 className="font-black text-slate-900">
+                            {notification.title}
+                          </h3>
 
-                          </div>
-
-                          <p className="mt-1.5 text-sm text-slate-600 leading-6">
-                            {notification.message}
-                          </p>
+                          {!notification.isRead && (
+                            <span className="w-2 h-2 rounded-full bg-blue-600" />
+                          )}
 
                         </div>
 
-                        <span className="text-xs font-semibold text-slate-400 shrink-0">
-                          {getTimeAgo(
-                            notification.createdAt
-                          )}
+                        <p className="mt-1.5 text-sm text-slate-600 leading-6">
+                          {notification.message}
+                        </p>
+
+                      </div>
+
+                      <span className="text-xs font-semibold text-slate-400 shrink-0">
+                        {getTimeAgo(notification.createdAt)}
+                      </span>
+
+                    </div>
+
+                    {/* RELATED JOB */}
+                    {notification.relatedJob && (
+                      <div className="mt-3 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-100">
+
+                        <span className="text-xs font-bold text-slate-500">
+                          {notification.relatedJob.title}
                         </span>
 
+                        {notification.relatedJob.company && (
+                          <>
+                            <span className="text-slate-300">
+                              /
+                            </span>
+
+                            <span className="text-xs font-semibold text-slate-400">
+                              {notification.relatedJob.company}
+                            </span>
+                          </>
+                        )}
+
                       </div>
+                    )}
 
-                      {/* RELATED JOB */}
-                      {notification.relatedJob && (
-                        <div className="mt-3 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-100">
+                    {/* ACTIONS */}
+                    <div className="flex flex-wrap items-center gap-2 mt-4">
 
-                          <span className="text-xs font-bold text-slate-500">
-                            {notification.relatedJob.title}
-                          </span>
-
-                          {notification.relatedJob.company && (
-                            <>
-                              <span className="text-slate-300">
-                                /
-                              </span>
-
-                              <span className="text-xs font-semibold text-slate-400">
-                                {
-                                  notification
-                                    .relatedJob
-                                    .company
-                                }
-                              </span>
-                            </>
-                          )}
-
-                        </div>
-                      )}
-
-                      {/* ACTIONS */}
-                      <div className="flex flex-wrap items-center gap-2 mt-4">
-
-                        {!notification.isRead && (
-                          <button
-                            onClick={() =>
-                              markAsRead(
-                                notification._id
-                              )
-                            }
-                            className="px-3 py-2 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition"
-                          >
-                            Mark as read
-                          </button>
-                        )}
-
-                        {notification.relatedJob && (
-                          <Link
-                            to={`/jobs/${notification.relatedJob._id}`}
-                            onClick={() =>
-                              !notification.isRead &&
-                              markAsRead(
-                                notification._id
-                              )
-                            }
-                            className="px-3 py-2 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
-                          >
-                            View job
-                          </Link>
-                        )}
-
+                      {!notification.isRead && (
                         <button
                           onClick={() =>
-                            deleteNotification(
-                              notification._id
-                            )
+                            markAsRead(notification._id)
                           }
-                          className="px-3 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
+                          className="px-3 py-2 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition"
                         >
-                          Delete
+                          Mark as read
                         </button>
+                      )}
 
-                      </div>
+                      {notification.relatedJob && (
+                        <Link
+                          to={`/job/${notification.relatedJob._id}`}
+                          onClick={() =>
+                            !notification.isRead &&
+                            markAsRead(notification._id)
+                          }
+                          className="px-3 py-2 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
+                        >
+                          View job
+                        </Link>
+                      )}
+
+                      <button
+                        onClick={() =>
+                          deleteNotification(notification._id)
+                        }
+                        className="px-3 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
+                      >
+                        Delete
+                      </button>
+
                     </div>
+
                   </div>
+
                 </div>
-              )
-            )}
+
+              </div>
+
+            ))}
 
           </div>
+
         )}
+
       </main>
+
     </div>
   );
 }

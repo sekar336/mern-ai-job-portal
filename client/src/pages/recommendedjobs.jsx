@@ -13,10 +13,14 @@ function RecommendedJobs() {
 
   const fetchAIRecommendations = async () => {
     try {
+      setLoading(true);
+      setError("");
+
       const token = localStorage.getItem("token");
 
       if (!token) {
         setError("Please login to use AI recommendations.");
+        setJobs([]);
         return;
       }
 
@@ -29,12 +33,38 @@ function RecommendedJobs() {
         }
       );
 
-      setJobs(response.data.jobs || []);
+      /*
+        Backend response:
+
+        {
+          message: "...",
+          resume: {...},
+          matches: [
+            {
+              job: {...},
+              matchPercentage: 85,
+              matchedSkills: [...],
+              missingSkills: [...],
+              explanation: "..."
+            }
+          ]
+        }
+      */
+
+      const matchData = Array.isArray(response.data.matches)
+        ? response.data.matches
+        : [];
+
+      setJobs(matchData);
     } catch (err) {
+      console.error("AI Recommendation Error:", err);
+
       setError(
         err.response?.data?.message ||
           "Unable to generate AI recommendations"
       );
+
+      setJobs([]);
     } finally {
       setLoading(false);
     }
@@ -74,34 +104,37 @@ function RecommendedJobs() {
     jobs.length > 0
       ? Math.round(
           jobs.reduce(
-            (sum, job) =>
-              sum + (job.matchPercentage || 0),
+            (sum, match) =>
+              sum + Number(match.matchPercentage || 0),
             0
           ) / jobs.length
         )
       : 0;
 
   const strongMatches = jobs.filter(
-    (job) => (job.matchPercentage || 0) >= 80
+    (match) =>
+      Number(match.matchPercentage || 0) >= 80
   ).length;
 
   const totalMatchedSkills = [
     ...new Set(
-      jobs.flatMap((job) => job.matchedSkills || [])
+      jobs.flatMap((match) =>
+        Array.isArray(match.matchedSkills)
+          ? match.matchedSkills
+          : []
+      )
     ),
   ].length;
 
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center relative overflow-hidden">
-
         <div className="absolute top-10 left-1/4 w-96 h-96 bg-blue-600/10 blur-3xl rounded-full" />
+
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-600/10 blur-3xl rounded-full" />
 
         <div className="relative text-center px-6">
-
           <div className="relative w-28 h-28 mx-auto mb-8">
-
             <div className="absolute inset-0 rounded-full border border-blue-500/20" />
 
             <div className="absolute inset-3 rounded-full border-2 border-blue-500/20 border-t-blue-500 animate-spin" />
@@ -111,7 +144,6 @@ function RecommendedJobs() {
                 AI
               </span>
             </div>
-
           </div>
 
           <p className="text-blue-400 text-xs font-bold uppercase tracking-[0.25em]">
@@ -132,7 +164,6 @@ function RecommendedJobs() {
             <span className="w-2 h-2 rounded-full bg-blue-500/60 animate-pulse delay-150" />
             <span className="w-2 h-2 rounded-full bg-blue-500/30 animate-pulse delay-300" />
           </div>
-
         </div>
       </div>
     );
@@ -143,7 +174,6 @@ function RecommendedJobs() {
 
       {/* Background */}
       <div className="fixed inset-0 pointer-events-none">
-
         <div className="absolute -top-40 left-1/4 w-[500px] h-[500px] bg-blue-600/10 blur-3xl rounded-full" />
 
         <div className="absolute top-1/2 -right-40 w-[500px] h-[500px] bg-indigo-600/10 blur-3xl rounded-full" />
@@ -156,7 +186,6 @@ function RecommendedJobs() {
             backgroundSize: "40px 40px",
           }}
         />
-
       </div>
 
       <main className="relative max-w-7xl mx-auto px-5 sm:px-8 py-10">
@@ -197,13 +226,13 @@ function RecommendedJobs() {
 
             <button
               onClick={fetchAIRecommendations}
-              className="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold transition"
+              disabled={loading}
+              className="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold transition disabled:opacity-50"
             >
               Re-analyze
             </button>
 
           </div>
-
         </div>
 
         {/* Error */}
@@ -227,7 +256,6 @@ function RecommendedJobs() {
               </div>
 
             </div>
-
           </div>
         )}
 
@@ -326,7 +354,6 @@ function RecommendedJobs() {
         {/* Results */}
         {!error && jobs.length > 0 && (
           <>
-
             <div className="flex items-end justify-between mb-5">
 
               <div>
@@ -347,17 +374,39 @@ function RecommendedJobs() {
 
             <div className="grid lg:grid-cols-2 gap-6">
 
-              {jobs.map((job, index) => {
+              {jobs.map((match, index) => {
+
+                /*
+                  Backend structure:
+
+                  match.job
+                  match.matchPercentage
+                  match.matchedSkills
+                  match.missingSkills
+                  match.explanation
+                */
+
+                const job = match.job || {};
 
                 const percentage =
-                  job.matchPercentage || 0;
+                  Number(match.matchPercentage || 0);
 
                 const level =
                   getMatchLevel(percentage);
 
+                const matchedSkills =
+                  Array.isArray(match.matchedSkills)
+                    ? match.matchedSkills
+                    : [];
+
+                const missingSkills =
+                  Array.isArray(match.missingSkills)
+                    ? match.missingSkills
+                    : [];
+
                 return (
                   <div
-                    key={job._id}
+                    key={job._id || index}
                     className="group relative bg-white/[0.04] hover:bg-white/[0.06] border border-white/10 hover:border-blue-500/30 rounded-3xl overflow-hidden transition-all duration-300"
                   >
 
@@ -385,11 +434,11 @@ function RecommendedJobs() {
                         <div className="min-w-0">
 
                           <h3 className="text-xl sm:text-2xl font-bold truncate group-hover:text-blue-400 transition">
-                            {job.title}
+                            {job.title || "Untitled Job"}
                           </h3>
 
                           <p className="text-slate-400 mt-1">
-                            {job.company}
+                            {job.company || "Company"}
                           </p>
 
                         </div>
@@ -402,11 +451,13 @@ function RecommendedJobs() {
                         <div className="flex items-center justify-between gap-5">
 
                           <div>
+
                             <p className="text-xs text-slate-500 uppercase tracking-wider">
                               AI Compatibility
                             </p>
 
                             <div className="flex items-end gap-2 mt-1">
+
                               <span
                                 className={`text-4xl font-bold ${level.text}`}
                               >
@@ -418,7 +469,9 @@ function RecommendedJobs() {
                               >
                                 {level.label}
                               </span>
+
                             </div>
+
                           </div>
 
                           {/* Circular Score */}
@@ -459,13 +512,17 @@ function RecommendedJobs() {
                       {/* Job Meta */}
                       <div className="flex flex-wrap gap-2 mt-5">
 
-                        <span className="px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/5 text-xs text-slate-400">
-                          {job.location}
-                        </span>
+                        {job.location && (
+                          <span className="px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/5 text-xs text-slate-400">
+                            {job.location}
+                          </span>
+                        )}
 
-                        <span className="px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/5 text-xs text-slate-400">
-                          {job.jobType}
-                        </span>
+                        {job.jobType && (
+                          <span className="px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/5 text-xs text-slate-400">
+                            {job.jobType}
+                          </span>
+                        )}
 
                         {job.experience && (
                           <span className="px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/5 text-xs text-slate-400">
@@ -490,7 +547,8 @@ function RecommendedJobs() {
 
                         </div>
 
-                        {job.matchedSkills?.length > 0 && (
+                        {/* Matched skills */}
+                        {matchedSkills.length > 0 && (
                           <div>
 
                             <p className="text-xs text-emerald-400 font-semibold mb-2">
@@ -499,7 +557,7 @@ function RecommendedJobs() {
 
                             <div className="flex flex-wrap gap-2">
 
-                              {job.matchedSkills.map(
+                              {matchedSkills.map(
                                 (skill, skillIndex) => (
                                   <span
                                     key={`${skill}-${skillIndex}`}
@@ -511,11 +569,11 @@ function RecommendedJobs() {
                               )}
 
                             </div>
-
                           </div>
                         )}
 
-                        {job.missingSkills?.length > 0 && (
+                        {/* Missing skills */}
+                        {missingSkills.length > 0 && (
                           <div className="mt-4">
 
                             <p className="text-xs text-amber-400 font-semibold mb-2">
@@ -524,13 +582,10 @@ function RecommendedJobs() {
 
                             <div className="flex flex-wrap gap-2">
 
-                              {job.missingSkills
+                              {missingSkills
                                 .slice(0, 6)
                                 .map(
-                                  (
-                                    skill,
-                                    skillIndex
-                                  ) => (
+                                  (skill, skillIndex) => (
                                     <span
                                       key={`${skill}-${skillIndex}`}
                                       className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/15 text-amber-300 text-xs font-medium"
@@ -540,25 +595,27 @@ function RecommendedJobs() {
                                   )
                                 )}
 
-                              {job.missingSkills.length >
-                                6 && (
+                              {missingSkills.length > 6 && (
                                 <span className="px-2.5 py-1.5 rounded-lg bg-white/[0.04] text-slate-500 text-xs">
-                                  +
-                                  {job.missingSkills
-                                    .length - 6}{" "}
-                                  more
+                                  +{missingSkills.length - 6} more
                                 </span>
                               )}
 
                             </div>
-
                           </div>
                         )}
+
+                        {matchedSkills.length === 0 &&
+                          missingSkills.length === 0 && (
+                            <p className="text-sm text-slate-500">
+                              No detailed skill comparison was returned.
+                            </p>
+                          )}
 
                       </div>
 
                       {/* AI Explanation */}
-                      {job.explanation && (
+                      {match.explanation && (
                         <div className="mt-6 p-4 rounded-2xl bg-blue-500/[0.05] border border-blue-500/10">
 
                           <div className="flex items-center gap-2 mb-2">
@@ -576,7 +633,7 @@ function RecommendedJobs() {
                           </div>
 
                           <p className="text-sm text-slate-400 leading-relaxed">
-                            {job.explanation}
+                            {match.explanation}
                           </p>
 
                         </div>
@@ -586,6 +643,7 @@ function RecommendedJobs() {
                       <div className="mt-6 pt-5 border-t border-white/10 flex items-center justify-between gap-4">
 
                         <div>
+
                           <p className="text-[10px] text-slate-600 uppercase tracking-wider">
                             Recommended action
                           </p>
@@ -597,6 +655,7 @@ function RecommendedJobs() {
                               ? "Worth exploring based on your profile."
                               : "Review skill requirements first."}
                           </p>
+
                         </div>
 
                         <Link
@@ -648,7 +707,6 @@ function RecommendedJobs() {
               </div>
 
             </div>
-
           </>
         )}
 
@@ -657,4 +715,4 @@ function RecommendedJobs() {
   );
 }
 
-export default RecommendedJobs;;
+export default RecommendedJobs;

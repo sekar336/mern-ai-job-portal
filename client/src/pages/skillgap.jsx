@@ -19,6 +19,11 @@ function SkillGap() {
 
       const token = localStorage.getItem("token");
 
+      if (!token) {
+        setError("Please login to use AI Skill Intelligence.");
+        return;
+      }
+
       const response = await axios.get(
         "http://localhost:5000/api/ai/resume-match",
         {
@@ -28,15 +33,31 @@ function SkillGap() {
         }
       );
 
-      const jobData = response.data.jobs || [];
+      // ----------------------------------------------------
+      // Backend returns "matches", not "jobs"
+      // ----------------------------------------------------
+      const matchData = Array.isArray(response.data.matches)
+        ? response.data.matches
+        : [];
 
-      // Backend may provide extractedSkills.
-      // Fallback: collect skills already matched across analyzed jobs.
-      const extractedSkills = response.data.extractedSkills || [];
+      // ----------------------------------------------------
+      // Backend may provide extractedSkills in future.
+      // Current backend does not, so collect matched skills
+      // from all analyzed jobs as a fallback.
+      // ----------------------------------------------------
+      const extractedSkills = Array.isArray(
+        response.data.extractedSkills
+      )
+        ? response.data.extractedSkills
+        : [];
 
       const fallbackSkills = [
         ...new Set(
-          jobData.flatMap((job) => job.matchedSkills || [])
+          matchData.flatMap((job) =>
+            Array.isArray(job.matchedSkills)
+              ? job.matchedSkills
+              : []
+          )
         ),
       ];
 
@@ -46,26 +67,42 @@ function SkillGap() {
           : fallbackSkills
       );
 
-      setJobs(jobData);
+      setJobs(matchData);
     } catch (err) {
+      console.error("Skill Gap Error:", err);
+
       setError(
         err.response?.data?.message ||
           "Unable to analyze skill gap"
       );
+
+      setSkills([]);
+      setJobs([]);
     } finally {
       setLoading(false);
     }
   };
 
+  // ----------------------------------------------------
+  // Unique missing skills
+  // ----------------------------------------------------
   const uniqueMissingSkills = useMemo(() => {
     const skillMap = new Map();
 
     jobs.forEach((job) => {
-      (job.missingSkills || []).forEach((skill) => {
-        const key = skill.trim().toLowerCase();
+      if (!Array.isArray(job.missingSkills)) return;
 
-        if (key && !skillMap.has(key)) {
-          skillMap.set(key, skill.trim());
+      job.missingSkills.forEach((skill) => {
+        if (!skill) return;
+
+        const cleanedSkill = String(skill).trim();
+
+        if (!cleanedSkill) return;
+
+        const key = cleanedSkill.toLowerCase();
+
+        if (!skillMap.has(key)) {
+          skillMap.set(key, cleanedSkill);
         }
       });
     });
@@ -73,33 +110,46 @@ function SkillGap() {
     return [...skillMap.values()];
   }, [jobs]);
 
+  // ----------------------------------------------------
+  // Average AI match
+  // ----------------------------------------------------
   const averageMatch = useMemo(() => {
     if (!jobs.length) return 0;
 
     const total = jobs.reduce(
-      (sum, job) => sum + (job.matchPercentage || 0),
+      (sum, job) =>
+        sum + Number(job.matchPercentage || 0),
       0
     );
 
     return Math.round(total / jobs.length);
   }, [jobs]);
 
+  // ----------------------------------------------------
+  // Strong matches
+  // ----------------------------------------------------
   const strongMatches = useMemo(() => {
     return jobs.filter(
-      (job) => (job.matchPercentage || 0) >= 80
+      (job) =>
+        Number(job.matchPercentage || 0) >= 80
     ).length;
   }, [jobs]);
 
-  const topJob = jobs.length > 0 ? jobs[0] : null;
+  // ----------------------------------------------------
+  // Best opportunity
+  // ----------------------------------------------------
+  const topJob =
+    jobs.length > 0 ? jobs[0] : null;
 
+  // ----------------------------------------------------
+  // Match theme
+  // ----------------------------------------------------
   const getMatchTheme = (percentage) => {
     if (percentage >= 80) {
       return {
         label: "Excellent Match",
         text: "text-emerald-600",
         bg: "bg-emerald-500",
-        soft: "bg-emerald-50",
-        border: "border-emerald-100",
       };
     }
 
@@ -108,8 +158,6 @@ function SkillGap() {
         label: "Good Match",
         text: "text-amber-600",
         bg: "bg-amber-500",
-        soft: "bg-amber-50",
-        border: "border-amber-100",
       };
     }
 
@@ -117,11 +165,12 @@ function SkillGap() {
       label: "Needs Improvement",
       text: "text-red-600",
       bg: "bg-red-500",
-      soft: "bg-red-50",
-      border: "border-red-100",
     };
   };
 
+  // ----------------------------------------------------
+  // Loading
+  // ----------------------------------------------------
   if (loading) {
     return (
       <div className="min-h-screen bg-[#07111f] text-white flex items-center justify-center px-6 relative overflow-hidden">
@@ -141,8 +190,9 @@ function SkillGap() {
           </h1>
 
           <p className="mt-3 text-slate-400 leading-relaxed">
-            AI is comparing your resume against current job
-            requirements and identifying your strongest opportunities.
+            AI is comparing your resume against current
+            job requirements and identifying your strongest
+            opportunities.
           </p>
 
           <div className="mt-7 h-1.5 bg-white/10 rounded-full overflow-hidden">
@@ -153,12 +203,13 @@ function SkillGap() {
     );
   }
 
+  // ----------------------------------------------------
+  // Main UI
+  // ----------------------------------------------------
   return (
     <div className="min-h-screen bg-[#f5f7fb] text-slate-900">
 
-      {/* =====================================================
-          HERO
-      ====================================================== */}
+      {/* HERO */}
       <section className="relative overflow-hidden bg-[#07111f] text-white">
         <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_10%_20%,#2563eb,transparent_28%),radial-gradient(circle_at_90%_10%,#7c3aed,transparent_25%)]" />
 
@@ -184,14 +235,16 @@ function SkillGap() {
 
               <p className="mt-6 text-slate-400 text-base sm:text-lg leading-relaxed max-w-2xl">
                 Your resume has been analyzed against available
-                opportunities. Discover your strengths, identify skill
-                gaps, and understand exactly where you can improve.
+                opportunities. Discover your strengths, identify
+                skill gaps, and understand exactly where you can improve.
               </p>
 
               <div className="flex flex-wrap gap-3 mt-8">
+
                 <button
                   onClick={fetchSkillGap}
-                  className="px-5 py-3 rounded-xl bg-white text-slate-900 font-bold hover:bg-slate-100 transition shadow-lg"
+                  disabled={loading}
+                  className="px-5 py-3 rounded-xl bg-white text-slate-900 font-bold hover:bg-slate-100 transition shadow-lg disabled:opacity-50"
                 >
                   Re-analyze Resume
                 </button>
@@ -202,10 +255,11 @@ function SkillGap() {
                 >
                   View AI Matches
                 </Link>
+
               </div>
             </div>
 
-            {/* Hero score */}
+            {/* Career score */}
             <div className="w-full lg:w-[310px] rounded-3xl border border-white/10 bg-white/[0.06] backdrop-blur-xl p-6 shadow-2xl">
 
               <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
@@ -213,6 +267,7 @@ function SkillGap() {
               </p>
 
               <div className="flex items-center gap-5 mt-5">
+
                 <div
                   className="w-28 h-28 rounded-full p-2 shrink-0"
                   style={{
@@ -223,6 +278,7 @@ function SkillGap() {
                     <span className="text-3xl font-black">
                       {averageMatch}%
                     </span>
+
                     <span className="text-[10px] text-slate-500 uppercase">
                       average
                     </span>
@@ -242,24 +298,27 @@ function SkillGap() {
                     Based on AI job compatibility
                   </p>
                 </div>
+
               </div>
 
               <div className="mt-6 h-2 rounded-full bg-white/10 overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-blue-500 to-violet-500 rounded-full"
-                  style={{ width: `${averageMatch}%` }}
+                  style={{
+                    width: `${averageMatch}%`,
+                  }}
                 />
               </div>
+
             </div>
+
           </div>
         </div>
       </section>
 
       <main className="max-w-7xl mx-auto px-5 sm:px-8 py-10">
 
-        {/* =====================================================
-            ERROR
-        ====================================================== */}
+        {/* ERROR */}
         {error && (
           <div className="mb-8 rounded-2xl border border-red-200 bg-red-50 p-5">
             <p className="font-bold text-red-700">
@@ -272,9 +331,7 @@ function SkillGap() {
           </div>
         )}
 
-        {/* =====================================================
-            METRICS
-        ====================================================== */}
+        {/* METRICS */}
         <section className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
 
           <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
@@ -343,22 +400,18 @@ function SkillGap() {
 
         </section>
 
-        {/* =====================================================
-            TOP OPPORTUNITY
-        ====================================================== */}
+        {/* TOP OPPORTUNITY */}
         {topJob && (
           <section className="mb-10">
 
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-indigo-500 font-bold">
-                  AI Recommendation
-                </p>
+            <div className="mb-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-indigo-500 font-bold">
+                AI Recommendation
+              </p>
 
-                <h2 className="text-2xl font-black mt-1">
-                  Your strongest opportunity
-                </h2>
-              </div>
+              <h2 className="text-2xl font-black mt-1">
+                Your strongest opportunity
+              </h2>
             </div>
 
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-blue-600 to-violet-700 text-white p-7 sm:p-9 shadow-xl shadow-indigo-200">
@@ -368,8 +421,11 @@ function SkillGap() {
               <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-8">
 
                 <div className="flex items-start gap-4">
+
                   <div className="w-14 h-14 rounded-2xl bg-white/15 border border-white/10 flex items-center justify-center text-xl font-black">
-                    {topJob.company?.charAt(0)?.toUpperCase() || "J"}
+                    {topJob.job?.company?.charAt(0)?.toUpperCase() ||
+                      topJob.company?.charAt(0)?.toUpperCase() ||
+                      "J"}
                   </div>
 
                   <div>
@@ -378,16 +434,18 @@ function SkillGap() {
                     </p>
 
                     <h3 className="text-2xl sm:text-3xl font-black mt-1">
-                      {topJob.title}
+                      {topJob.job?.title || topJob.title}
                     </h3>
 
                     <p className="text-blue-100 mt-1">
-                      {topJob.company}
+                      {topJob.job?.company || topJob.company}
                     </p>
                   </div>
+
                 </div>
 
                 <div className="flex items-center gap-6">
+
                   <div>
                     <p className="text-xs uppercase tracking-wider text-blue-100">
                       Match score
@@ -399,20 +457,20 @@ function SkillGap() {
                   </div>
 
                   <Link
-                    to={`/job/${topJob._id}`}
+                    to={`/job/${topJob.job?._id || topJob._id}`}
                     className="px-5 py-3 rounded-xl bg-white text-indigo-700 font-bold hover:bg-slate-100 transition"
                   >
                     Explore Role
                   </Link>
+
                 </div>
+
               </div>
             </div>
           </section>
         )}
 
-        {/* =====================================================
-            SKILL MAP
-        ====================================================== */}
+        {/* SKILL MAP */}
         <section className="grid lg:grid-cols-2 gap-6 mb-12">
 
           {/* Strengths */}
@@ -437,10 +495,12 @@ function SkillGap() {
               <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-black">
                 {skills.length}
               </div>
+
             </div>
 
             {skills.length > 0 ? (
               <div className="flex flex-wrap gap-2 mt-7">
+
                 {skills.map((skill, index) => (
                   <span
                     key={`${skill}-${index}`}
@@ -449,9 +509,11 @@ function SkillGap() {
                     {skill}
                   </span>
                 ))}
+
               </div>
             ) : (
               <div className="mt-7 rounded-2xl bg-slate-50 border border-dashed border-slate-200 p-6 text-center">
+
                 <p className="text-sm text-slate-500">
                   No resume skills were detected yet.
                 </p>
@@ -462,8 +524,10 @@ function SkillGap() {
                 >
                   Update your profile
                 </Link>
+
               </div>
             )}
+
           </div>
 
           {/* Gaps */}
@@ -488,10 +552,12 @@ function SkillGap() {
               <div className="w-11 h-11 rounded-xl bg-red-50 flex items-center justify-center text-red-600 font-black">
                 {uniqueMissingSkills.length}
               </div>
+
             </div>
 
             {uniqueMissingSkills.length > 0 ? (
               <div className="flex flex-wrap gap-2 mt-7">
+
                 {uniqueMissingSkills.map((skill, index) => (
                   <span
                     key={`${skill}-${index}`}
@@ -500,27 +566,30 @@ function SkillGap() {
                     + {skill}
                   </span>
                 ))}
+
               </div>
             ) : (
               <div className="mt-7 rounded-2xl bg-emerald-50 border border-emerald-100 p-6">
+
                 <p className="font-bold text-emerald-700">
                   Your skill profile is looking strong.
                 </p>
 
                 <p className="text-sm text-emerald-600 mt-1">
-                  No major skill gaps were identified across the analyzed jobs.
+                  No major gaps were identified across the analyzed jobs.
                 </p>
+
               </div>
             )}
+
           </div>
         </section>
 
-        {/* =====================================================
-            ROADMAP
-        ====================================================== */}
+        {/* ROADMAP */}
         <section className="mb-12">
 
           <div className="mb-6">
+
             <p className="text-xs uppercase tracking-[0.2em] text-indigo-500 font-bold">
               Career Roadmap
             </p>
@@ -533,51 +602,69 @@ function SkillGap() {
               Focus on the skills that repeatedly appear as missing
               across the roles you are targeting.
             </p>
+
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {uniqueMissingSkills.length > 0 ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
-            {uniqueMissingSkills.slice(0, 6).map((skill, index) => (
-              <div
-                key={`${skill}-roadmap`}
-                className="group bg-white border border-slate-200 rounded-2xl p-5 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/60 transition-all duration-300"
-              >
-                <div className="flex items-center justify-between">
+              {uniqueMissingSkills
+                .slice(0, 6)
+                .map((skill, index) => (
+                  <div
+                    key={`${skill}-roadmap`}
+                    className="group bg-white border border-slate-200 rounded-2xl p-5 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/60 transition-all duration-300"
+                  >
 
-                  <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-sm">
-                    {String(index + 1).padStart(2, "0")}
+                    <div className="flex items-center justify-between">
+
+                      <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-sm">
+                        {String(index + 1).padStart(2, "0")}
+                      </div>
+
+                      <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
+                        Growth Area
+                      </span>
+
+                    </div>
+
+                    <h3 className="font-bold text-lg mt-5">
+                      {skill}
+                    </h3>
+
+                    <div className="mt-4 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                      <div className="h-full w-1/3 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full" />
+                    </div>
+
+                    <p className="text-xs text-slate-400 mt-2">
+                      Recommended for your target roles
+                    </p>
+
                   </div>
+                ))}
 
-                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
-                    Growth Area
-                  </span>
-                </div>
+            </div>
+          ) : (
+            <div className="bg-white border border-slate-200 rounded-3xl p-8 text-center">
+              <p className="font-bold text-slate-700">
+                Your roadmap will appear here after AI identifies skill gaps.
+              </p>
 
-                <h3 className="font-bold text-lg mt-5">
-                  {skill}
-                </h3>
+              <p className="text-sm text-slate-500 mt-2">
+                Upload a resume and analyze available jobs.
+              </p>
+            </div>
+          )}
 
-                <div className="mt-4 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full w-1/3 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full" />
-                </div>
-
-                <p className="text-xs text-slate-400 mt-2">
-                  Recommended for your target roles
-                </p>
-              </div>
-            ))}
-
-          </div>
         </section>
 
-        {/* =====================================================
-            JOB ANALYSIS
-        ====================================================== */}
+        {/* JOB ANALYSIS */}
         <section>
 
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
 
             <div>
+
               <p className="text-xs uppercase tracking-[0.2em] text-blue-500 font-bold">
                 Opportunity Intelligence
               </p>
@@ -589,36 +676,68 @@ function SkillGap() {
               <p className="text-slate-500 mt-2">
                 Understand exactly why each opportunity matches your profile.
               </p>
+
             </div>
 
             <span className="text-sm font-semibold text-slate-500">
               {jobs.length} opportunities analyzed
             </span>
+
           </div>
 
           {jobs.length === 0 ? (
             <div className="bg-white border border-dashed border-slate-300 rounded-3xl p-12 text-center">
+
               <h3 className="text-xl font-bold">
-                No jobs available for analysis
+                No AI analysis available
               </h3>
 
               <p className="text-slate-500 mt-2">
-                Once jobs are available, AI will compare them with your resume.
+                Make sure you have uploaded a readable PDF or DOCX resume
+                and that jobs are available.
               </p>
 
-              <Link
-                to="/jobs"
-                className="inline-block mt-5 px-5 py-3 rounded-xl bg-slate-900 text-white font-bold"
-              >
-                Browse Jobs
-              </Link>
+              <div className="flex flex-wrap justify-center gap-3 mt-5">
+
+                <Link
+                  to="/profile"
+                  className="px-5 py-3 rounded-xl bg-slate-900 text-white font-bold"
+                >
+                  Check Resume
+                </Link>
+
+                <Link
+                  to="/jobs"
+                  className="px-5 py-3 rounded-xl border border-slate-200 font-bold"
+                >
+                  Browse Jobs
+                </Link>
+
+              </div>
+
             </div>
           ) : (
             <div className="grid md:grid-cols-2 gap-5">
 
-              {jobs.map((job, index) => {
-                const percentage = job.matchPercentage || 0;
-                const theme = getMatchTheme(percentage);
+              {jobs.map((match, index) => {
+
+                const job = match.job || match;
+
+                const percentage =
+                  Number(match.matchPercentage || 0);
+
+                const theme =
+                  getMatchTheme(percentage);
+
+                const matchedSkills =
+                  Array.isArray(match.matchedSkills)
+                    ? match.matchedSkills
+                    : [];
+
+                const missingSkills =
+                  Array.isArray(match.missingSkills)
+                    ? match.missingSkills
+                    : [];
 
                 return (
                   <article
@@ -638,6 +757,7 @@ function SkillGap() {
                           </div>
 
                           <div className="min-w-0">
+
                             <p className="text-xs text-slate-400">
                               #{String(index + 1).padStart(2, "0")}
                             </p>
@@ -649,17 +769,23 @@ function SkillGap() {
                             <p className="text-sm text-slate-500 truncate mt-0.5">
                               {job.company}
                             </p>
+
                           </div>
+
                         </div>
 
                         <div className="text-right shrink-0">
-                          <p className={`text-3xl font-black ${theme.text}`}>
+
+                          <p
+                            className={`text-3xl font-black ${theme.text}`}
+                          >
                             {percentage}%
                           </p>
 
                           <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
                             compatibility
                           </p>
+
                         </div>
 
                       </div>
@@ -668,6 +794,7 @@ function SkillGap() {
                       <div className="mt-6">
 
                         <div className="flex justify-between text-xs mb-2">
+
                           <span className={`font-bold ${theme.text}`}>
                             {theme.label}
                           </span>
@@ -675,16 +802,20 @@ function SkillGap() {
                           <span className="text-slate-400">
                             AI score
                           </span>
+
                         </div>
 
                         <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+
                           <div
                             className={`h-full ${theme.bg} rounded-full transition-all duration-700`}
                             style={{
                               width: `${percentage}%`,
                             }}
                           />
+
                         </div>
+
                       </div>
                     </div>
 
@@ -693,14 +824,17 @@ function SkillGap() {
 
                       <div className="grid sm:grid-cols-2 gap-5">
 
+                        {/* Matched */}
                         <div>
+
                           <p className="text-xs uppercase tracking-wider font-bold text-emerald-600 mb-3">
                             Your strengths
                           </p>
 
-                          {job.matchedSkills?.length > 0 ? (
+                          {matchedSkills.length > 0 ? (
                             <div className="flex flex-wrap gap-2">
-                              {job.matchedSkills.map(
+
+                              {matchedSkills.map(
                                 (skill, skillIndex) => (
                                   <span
                                     key={`${skill}-${skillIndex}`}
@@ -710,58 +844,71 @@ function SkillGap() {
                                   </span>
                                 )
                               )}
+
                             </div>
                           ) : (
                             <p className="text-xs text-slate-400">
                               No strong matches detected
                             </p>
                           )}
+
                         </div>
 
+                        {/* Missing */}
                         <div>
+
                           <p className="text-xs uppercase tracking-wider font-bold text-red-500 mb-3">
                             Growth areas
                           </p>
 
-                          {job.missingSkills?.length > 0 ? (
+                          {missingSkills.length > 0 ? (
                             <div className="flex flex-wrap gap-2">
-                              {job.missingSkills
+
+                              {missingSkills
                                 .slice(0, 5)
-                                .map((skill, skillIndex) => (
-                                  <span
-                                    key={`${skill}-${skillIndex}`}
-                                    className="px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs font-semibold"
-                                  >
-                                    + {skill}
-                                  </span>
-                                ))}
+                                .map(
+                                  (skill, skillIndex) => (
+                                    <span
+                                      key={`${skill}-${skillIndex}`}
+                                      className="px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs font-semibold"
+                                    >
+                                      + {skill}
+                                    </span>
+                                  )
+                                )}
+
                             </div>
                           ) : (
                             <p className="text-xs text-emerald-600 font-medium">
                               No major gaps
                             </p>
                           )}
+
                         </div>
 
                       </div>
 
                       {/* AI Explanation */}
-                      {job.explanation && (
+                      {match.explanation && (
                         <div className="mt-5 rounded-2xl bg-slate-50 border border-slate-100 p-4">
 
                           <div className="flex items-center gap-2">
+
                             <span className="w-2 h-2 rounded-full bg-indigo-500" />
 
                             <p className="text-xs uppercase tracking-wider font-bold text-indigo-600">
                               AI Insight
                             </p>
+
                           </div>
 
                           <p className="text-sm text-slate-600 leading-relaxed mt-2">
-                            {job.explanation}
+                            {match.explanation}
                           </p>
+
                         </div>
                       )}
+
                     </div>
 
                     {/* Footer */}
@@ -778,17 +925,17 @@ function SkillGap() {
                       </Link>
 
                     </div>
+
                   </article>
                 );
               })}
 
             </div>
           )}
+
         </section>
 
-        {/* =====================================================
-            FINAL CTA
-        ====================================================== */}
+        {/* FINAL CTA */}
         <section className="mt-14 rounded-3xl overflow-hidden bg-[#07111f] text-white relative">
 
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_50%,#4f46e5,transparent_35%)] opacity-30" />
@@ -796,6 +943,7 @@ function SkillGap() {
           <div className="relative p-8 sm:p-10 lg:p-12 flex flex-col lg:flex-row lg:items-center justify-between gap-7">
 
             <div>
+
               <p className="text-xs uppercase tracking-[0.2em] text-indigo-300 font-bold">
                 Next Step
               </p>
@@ -808,9 +956,11 @@ function SkillGap() {
                 Explore AI-matched opportunities and use your skill
                 roadmap to prepare for the roles you want.
               </p>
+
             </div>
 
             <div className="flex flex-wrap gap-3">
+
               <Link
                 to="/recommended-jobs"
                 className="px-5 py-3 rounded-xl bg-white text-slate-900 font-bold hover:bg-slate-100 transition"
@@ -824,6 +974,7 @@ function SkillGap() {
               >
                 Update Profile
               </Link>
+
             </div>
 
           </div>
