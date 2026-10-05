@@ -1,13 +1,23 @@
 {
   "name": "mern-ai-job-portal",
   "version": "1.0.0",
-  "description": "",
+  "description": "AI-powered MERN job portal for jobseekers and recruiters",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "mern",
+    "job-portal",
+    "ai",
+    "resume-matching",
+    "react",
+    "nodejs",
+    "mongodb"
+  ],
+  "author": "Sekar T",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
