@@ -5,8 +5,8 @@ const OpenAI = require("openai");
 const { PDFParse } = require("pdf-parse");
 const mammoth = require("mammoth");
 
-const User = require("../models/User");
-const Job = require("../models/Job");
+const User = require("../models/user");
+const Job = require("../models/job");
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,

@@ -9,7 +9,7 @@ const {
   updateJob,
   deleteJob,
   getRecommendedJobs,
-} = require("../controllers/jobController");
+} = require("../controllers/jobcontroller");
 
 const protect = require("../middleware/authMiddleware");
 const authorize = require("../middleware/roleMiddleware");

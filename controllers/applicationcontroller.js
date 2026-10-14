@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
-const Application = require("../models/Application");
+const Application = require("../models/application");
 const Notification = require("../models/notification");
-const Job = require("../models/Job");
+const Job = require("../models/job");
 
 // ==========================================
 // APPLY FOR A JOB

@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const upload = require("../middleware/uploadMiddleware");
+const upload = require("../middleware/uploadmiddleware");
 
 const {
   registerUser,
@@ -8,7 +8,7 @@ const {
   getUserProfile,
   updateUserSkills,
   uploadResume,
-} = require("../controllers/userController");
+} = require("../controllers/usercontroller");
 
 const protect = require("../middleware/authMiddleware");
 

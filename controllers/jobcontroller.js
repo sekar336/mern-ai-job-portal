@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
-const Job = require("../models/Job");
-const User = require("../models/User");
+const Job = require("../models/job");
+const User = require("../models/user");
 
 // ===============================
 // GET ALL JOBS
