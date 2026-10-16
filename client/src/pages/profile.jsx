@@ -219,7 +219,7 @@ function Profile() {
     if (
       resumeValue.startsWith("/")
     ) {
-      return `http://localhost:5000${resumeValue}`;
+      return `https://mern-ai-job-portal.onrender.com${resumeValue}`;
     }
 
     if (
@@ -227,10 +227,10 @@ function Profile() {
         "uploads/"
       )
     ) {
-      return `http://localhost:5000/${resumeValue}`;
+      return `https://mern-ai-job-portal.onrender.com/${resumeValue}`;
     }
 
-    return `http://localhost:5000/uploads/${resumeValue}`;
+    return `https://mern-ai-job-portal.onrender.com/uploads/${resumeValue}`;
   };
 
   const getResumeFileName = () => {

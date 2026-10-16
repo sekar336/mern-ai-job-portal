@@ -14,7 +14,7 @@ function Notifications() {
       setLoading(true);
 
       const response = await fetch(
-        "http://localhost:5000/api/notifications",
+        "https://mern-ai-job-portal.onrender.com/api/notifications",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -41,7 +41,7 @@ function Notifications() {
   const markAsRead = async (id) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/notifications/${id}/read`,
+        `https://mern-ai-job-portal.onrender.com/api/notifications/${id}/read`,
         {
           method: "PUT",
           headers: {
@@ -74,7 +74,7 @@ function Notifications() {
       setActionLoading(true);
 
       const response = await fetch(
-        "http://localhost:5000/api/notifications/read-all",
+        "https://mern-ai-job-portal.onrender.com/api/notifications/read-all",
         {
           method: "PUT",
           headers: {
@@ -103,7 +103,7 @@ function Notifications() {
   const deleteNotification = async (id) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/notifications/${id}`,
+        `https://mern-ai-job-portal.onrender.com/api/notifications/${id}`,
         {
           method: "DELETE",
           headers: {

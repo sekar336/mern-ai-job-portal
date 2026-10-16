@@ -25,7 +25,7 @@ function RecommendedJobs() {
       }
 
       const response = await axios.get(
-        "http://localhost:5000/api/ai/resume-match",
+        "https://mern-ai-job-portal.onrender.com/api/ai/resume-match",
         {
           headers: {
             Authorization: `Bearer ${token}`,

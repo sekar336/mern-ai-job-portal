@@ -39,7 +39,7 @@ function Navbar() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/notifications/unread-count",
+        "https://mern-ai-job-portal.onrender.com/api/notifications/unread-count",
         {
           headers: {
             Authorization: `Bearer ${token}`,

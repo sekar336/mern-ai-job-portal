@@ -458,7 +458,7 @@ function Applicants() {
               (application, index) => {
                 const resumeUrl =
                   application.user?.resume
-                    ? `http://localhost:5000${application.user.resume}`
+                    ? `https://mern-ai-job-portal.onrender.com${application.user.resume}`
                     : "";
 
                 const name =
