@@ -1,26 +1,23 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-
 import Navbar from "./components/Navbar";
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/protectedroute";
 
 import Home from "./pages/Home";
-import Jobs from "./pages/Jobs";
-import JobDetails from "./pages/JobDetails";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Jobs from "./pages/jobs";
+import JobDetails from "./pages/jobdetails";
+import Login from "./pages/login";
+import Register from "./pages/register";
 
-import RecruiterDashboard from "./pages/RecruiterDashboard";
-import AddJob from "./pages/AddJob";
-import EditJob from "./pages/EditJob";
-import Applicants from "./pages/Applicants";
+import RecruiterDashboard from "./pages/recruiterdashboard";
+import AddJob from "./pages/addjob";
+import EditJob from "./pages/editjob";
+import Applicants from "./pages/applicants";
 
-import MyApplications from "./pages/MyApplications";
-import Profile from "./pages/Profile";
-import RecommendedJobs from "./pages/RecommendedJobs";
+import MyApplications from "./pages/myapplications";
+import Profile from "./pages/profile";
+import RecommendedJobs from "./pages/recommendedjobs";
 
-import SkillGap from "./pages/SkillGap";
-
-import Notifications from "./pages/Notifications";
+import SkillGap from "./pages/skillgap";
+import Notifications from "./pages/notifications";
 
 function App() {
   return (
